@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+
+<ImageView android:layout_width="wrap_content" 
+	android:layout_height="wrap_content" 
+	android:src="@drawable/icon" 
+	android:id="@+id/icon">
+	</ImageView>
+	<TextView android:layout_height="wrap_content" 
+	android:layout_width="fill_parent" 
+	android:id="@+id/maintext" 
+	android:text="@+id/Maintext"
+	android:layout_toRightOf="@id/icon"
+	android:textSize="16sp"></TextView>
+<TextView android:text="@+id/DescText" 
+android:layout_height="wrap_content" 
+android:layout_width="fill_parent" 
+android:id="@+id/desctext"
+android:textSize="8sp"
+android:layout_below="@id/maintext"
+android:layout_toRightOf="@id/icon">
+</TextView>
+
+</RelativeLayout>
