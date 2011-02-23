@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.phasip.camerafolders;
 
 import java.io.File;
@@ -29,7 +29,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.provider.MediaStore; //import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -37,41 +37,60 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.Toast;
+
 /**
  * A application that takes pictures and puts them in a folder
+ * 
  * @author Pasi Saarinen
- *
+ * 
  */
 public class CameraFolders extends Activity implements OnClickListener {
 	// private static final String APP_NAME = "Lecture Cam";
 	private final int CAPTURE_IMAGE = 2;
 	Uri imageUri = null;
 	private FileBrowser fb;
+	File sdCardFile;
+	boolean allowRoot = false;
+	private SharedPreferences mPrefs;
 
 	/* Load the default folder */
 	private void loadSettings() {
-		final SharedPreferences settings = getPreferences(0);
-		File f = new File(settings.getString("default_folder", Environment
-				.getExternalStorageDirectory().toString()));
+		sdCardFile = Environment.getExternalStorageDirectory();
+		File f;
+		mPrefs = getSharedPreferences("camfolders",MODE_PRIVATE);
+		f = new File(mPrefs.getString("default_folder", sdCardFile.getAbsolutePath()));
+		allowRoot = mPrefs.getBoolean("allowRoot", false);
+
 		if (!f.exists())
 			f = Environment.getRootDirectory();
 		fb.updateFileList(f);
 	}
-	
+	protected void onPause() {
+        super.onPause();
+
+        SharedPreferences.Editor ed = mPrefs.edit();
+        ed.putString("default_folder", fb.getFile().getAbsolutePath());
+        ed.putBoolean("allowRoot", allowRoot);
+        ed.commit();
+    }
+
+
 	/** Move one folder back and if the current folder is root end application */
 	public void onBackPressed() {
 		File f = fb.getFile();
 		File p = f.getParentFile();
-		if (p == null) {
+		if (p == null || (f.compareTo(sdCardFile) == 0 && !allowRoot)) {
 			this.finish();
 			return;
 		}
 		fb.updateFileList(p);
 	}
-	
+
 	/**
 	 * Show a short toast
-	 * @param msg the toast to show
+	 * 
+	 * @param msg
+	 *            the toast to show
 	 */
 	private void shortToast(String msg) {
 		Context context = getApplicationContext();
@@ -83,14 +102,30 @@ public class CameraFolders extends Activity implements OnClickListener {
 	 * Called when the setdefault button in the menu is clicked
 	 */
 	public boolean onOptionsItemSelected(MenuItem item) {
-		SharedPreferences settings = getPreferences(0);
-		SharedPreferences.Editor editor = settings.edit();
-		if (item.getItemId() == R.id.setdefault) {
+		//SharedPreferences settings = getPreferences(0);
+		SharedPreferences.Editor editor = mPrefs.edit();
+		/*
+		 * if (item.getItemId() == R.id.setdefault) {
 			editor.putString("default_folder", fb.getFile().getAbsolutePath());
 			shortToast("Default folder: " + fb.getFile().getAbsolutePath());
+		} */
+		if (item.getItemId() == R.id.allowRoot) {
+			allowRoot = !allowRoot;
+			editor.putBoolean("allowRoot", allowRoot);
+			int icon = allowRoot ? android.R.drawable.button_onoff_indicator_on
+					: android.R.drawable.button_onoff_indicator_off;
+			item.setIcon(icon);
 		}
 		editor.commit();
 		return true;
+	}
+
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		if (allowRoot) //TODO: How is this constant found in variables? (0?)
+			menu.getItem(0).setIcon(
+					android.R.drawable.button_onoff_indicator_on);
+		return true;
+
 	}
 
 	/**
@@ -102,9 +137,12 @@ public class CameraFolders extends Activity implements OnClickListener {
 		inflater.inflate(R.menu.main_menu, menu);
 		return true;
 	}
+
 	/**
 	 * Sets the resources clickListener to this.
-	 * @param id Id of the resource.
+	 * 
+	 * @param id
+	 *            Id of the resource.
 	 */
 	private void setClickListener(int id) {
 		View v = this.findViewById(id);
@@ -115,10 +153,11 @@ public class CameraFolders extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		fb = (FileBrowser) this.findViewById(R.id.fileView);
 		setClickListener(R.id.camera);
-		// setClickListener(R.id.gallery); //Removed, didn't get it to work right.
+		// setClickListener(R.id.gallery); //Removed, didn't get it to work
+		// right.
 		setClickListener(R.id.newdir);
+		fb = (FileBrowser) this.findViewById(R.id.fileView);
 		loadSettings();
 	}
 
@@ -218,8 +257,7 @@ public class CameraFolders extends Activity implements OnClickListener {
 
 	}
 
-	protected void launchCamera() {
-
+	protected String launchCamera() {
 		// create parameters for Intent with filename
 		ContentValues values = new ContentValues();
 		// values.put(MediaStore.Images.Media.DATA,"/sdcard/file_moo.jpg");
@@ -228,8 +266,16 @@ public class CameraFolders extends Activity implements OnClickListener {
 				"Image capture by camera");
 		// imageUri is the current activity attribute, define and save it for
 		// later usage (also in onSaveInstanceState)
-		imageUri = getContentResolver().insert(
-				MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+		try {
+			imageUri = getContentResolver().insert(
+					MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+		} catch (IllegalStateException e) {
+			return "Could not open picture file, are you in read only directory?";
+		}
+		catch (UnsupportedOperationException e)
+		{
+			return "Your phone does not seem to be supported, please email me!";
+		}
 		// create new Intent
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 		File f = new File(fb.getFile().getAbsolutePath() + "/"
@@ -238,27 +284,32 @@ public class CameraFolders extends Activity implements OnClickListener {
 		intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
 		// MediaStore.EX
 		startActivityForResult(intent, CAPTURE_IMAGE);
+		return null;
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == CAPTURE_IMAGE) {
 			if (resultCode == RESULT_OK) {
 				new PictureTaker().execute();
-				fb.updateFileList();
 			} else if (resultCode == RESULT_CANCELED) {
 				shortToast("Picture was not taken");
-				fb.updateFileList();
 			} else {
 				shortToast("Picture was not taken");
 			}
+			fb.updateFileList();
 		}
 	}
 
-	private class PictureTaker extends AsyncTask<Void, Void, Void> {
-		protected Void doInBackground(Void... urls) {
-			launchCamera();
-			return null;
+	private class PictureTaker extends AsyncTask<Void, Void, String> {
+		protected String doInBackground(Void... urls) {
+			return launchCamera();
 		}
+
+		protected void onPostExecute(String result) {
+			if (result != null)
+				shortToast(result);
+		}
+
 	}
 
 	public void onClick(View arg0) {

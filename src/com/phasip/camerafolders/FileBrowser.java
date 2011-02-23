@@ -69,6 +69,10 @@ public class FileBrowser extends ListView implements ViewHandler<File>,
 			shortToast("Trying to enter non-directory");
 			return;
 		}
+		if (!f.canWrite())
+		{
+			shortToast("This directory is Read-Only.");
+		}
 	//	Log.i("qweqwe", "File list updated!");
 		currFile = f;
 		files.clear();
