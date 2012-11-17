@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, LectureCam!</string>
     <string name="app_name">Camera Folders</string>
+    <string name="first_run_version_title">Please Use Email</string>
+<string name="ok_menu_button">Ok</string>
+<string name="rename_file">Enter new name for file</string>
+<string name="abort_menu_button">Abort</string>
+<string name="new_file_pattern_title">Change file creation pattern.</string>
+<string name="new_file_pattern">Pattern to create files from (.jpg is appended at end).\nSee app description for more info</string>
+<string name="first_run_message">If you have problems with this application please email me.\n\n
+I <b>can not</b> help you trough comments.</string>
+<string name="delete_file">Do you really want to delete this file?</string>
 </resources>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android:id="@android:id/tabhost" -->
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/TabHost"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical" >
+
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+			
+            <LinearLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/mainTab"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical"  >
+                
+				<TextView android:id="@+id/browsTitle"
+				    android:layout_width="fill_parent"
+				    android:layout_height="wrap_content"
+				    android:layout_marginLeft="5dip"
+				    android:text="CameraFolders"
+				    android:textColor="#DED"
+				     />
+				
+                <com.phasip.camerafolders.FileBrowser
+                    android:id="@+id/fileView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1.0" />
+ 
+                 <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="43dip"
+                    android:orientation="horizontal" >
+ 
+                    <ImageButton
+                        android:id="@+id/camera"
+                        android:layout_weight="1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:src="@android:drawable/ic_menu_camera" 
+                        >
+                    </ImageButton>
+					<ImageButton
+                        android:id="@+id/video"
+                        android:visibility="gone"
+                        android:layout_weight="1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_video_default_holo_light" >
+                    </ImageButton>
+                    <ImageButton
+                        android:id="@+id/newdir"
+                        android:layout_weight="1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:src="@android:drawable/ic_menu_add" >
+                    </ImageButton>
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/favTab"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" >
+
+                <com.phasip.camerafolders.FavList
+                    android:id="@+id/favView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1.0" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+</TabHost>

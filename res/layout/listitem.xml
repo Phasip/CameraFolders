@@ -1,27 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="fill_parent"
-  android:layout_height="fill_parent">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="horizontal" >
 
-<ImageView android:layout_width="wrap_content" 
-	android:layout_height="wrap_content" 
-	android:src="@drawable/icon" 
-	android:id="@+id/icon">
-	</ImageView>
-	<TextView android:layout_height="wrap_content" 
-	android:layout_width="fill_parent" 
-	android:id="@+id/maintext" 
-	android:text="@+id/Maintext"
-	android:layout_toRightOf="@id/icon"
-	android:textSize="16sp"></TextView>
-<TextView android:text="@+id/DescText" 
-android:layout_height="wrap_content" 
-android:layout_width="fill_parent" 
-android:id="@+id/desctext"
-android:textSize="8sp"
-android:layout_below="@id/maintext"
-android:layout_toRightOf="@id/icon">
-</TextView>
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="50dip"
+        android:src="@drawable/icon" >
+    </ImageView>
 
-</RelativeLayout>
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
+        android:id="@+id/listitemSUB" >
+
+        <TextView
+            android:id="@+id/maintext"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@+id/Maintext"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+        <TextView
+            android:id="@+id/desctext"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom"
+            android:text="@+id/DescText"
+            android:textColor="#FFFFFF"
+            android:textSize="8sp" />
+    </LinearLayout>
+
+</LinearLayout>

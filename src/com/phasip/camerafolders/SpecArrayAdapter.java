@@ -71,7 +71,7 @@ public class SpecArrayAdapter<T> extends ArrayAdapter<T> {
 	protected View createViewFromResource(int position, View convertView, ViewGroup parent,
             int resource) {
         View view;
-        
+      
         if (convertView == null) {
             view = mInflater.inflate(resource, parent, false);
         } else {

@@ -18,24 +18,30 @@ package com.phasip.camerafolders;
 
 import java.io.File;
 import java.util.Date;
+
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore; //import android.util.Log;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TabHost;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -44,42 +50,109 @@ import android.widget.Toast;
  * @author Pasi Saarinen
  * 
  */
-public class CameraFolders extends Activity implements OnClickListener {
+public class CameraFolders extends Activity implements OnClickListener, FileHandler {
 	// private static final String APP_NAME = "Lecture Cam";
 	private final int CAPTURE_IMAGE = 2;
-	Uri imageUri = null;
+
 	private FileBrowser fb;
-	File sdCardFile;
-	boolean allowRoot = false;
-	private SharedPreferences mPrefs;
+	private Settings settings;
+	TabHost tabs;
+	public static final String TAB_BROWSE = "browse";
+	private static final String TAB_FAV = "fav";
+	private FavList fl = null;
+	private String APP_NAME = "CameraFolders";
+
+	public void tabCreate() {
+		setContentView(R.layout.tablayout);
+
+		tabs = (TabHost) findViewById(R.id.TabHost);
+
+		tabs.setup();
+
+		TabHost.TabSpec browseTab = tabs.newTabSpec(TAB_BROWSE);
+		browseTab.setIndicator("Browse");
+		browseTab.setContent(R.id.mainTab);
+
+		TabHost.TabSpec favTab = tabs.newTabSpec(TAB_FAV);
+		browseTab.setIndicator(getLayoutInflater().inflate(R.layout.browsetabind, null));
+		favTab.setIndicator(getLayoutInflater().inflate(R.layout.favtabind, null));
+		favTab.setContent(R.id.favTab);
+
+		tabs.addTab(browseTab);
+		tabs.addTab(favTab);
+	}
 
 	/* Load the default folder */
 	private void loadSettings() {
-		sdCardFile = Environment.getExternalStorageDirectory();
-		File f;
-		mPrefs = getSharedPreferences("camfolders",MODE_PRIVATE);
-		f = new File(mPrefs.getString("default_folder", sdCardFile.getAbsolutePath()));
-		allowRoot = mPrefs.getBoolean("allowRoot", false);
-
-		if (!f.exists())
-			f = Environment.getRootDirectory();
-		fb.updateFileList(f);
+		settings = Settings.getInstance(this);
+		fb.showHidden(settings.isShowHidden());
+		fb.updateFileList(settings.getDefaultFolder());
+		ImageButton b = (ImageButton)findViewById(R.id.video);
+		b.setVisibility(settings.isShowVideo() ? View.VISIBLE : View.GONE);
 	}
+
 	protected void onPause() {
-        super.onPause();
+		super.onPause();
+		Log.d(APP_NAME, "ONPAUSE CALLED!");
+		settings.setDefaultFolder(fb.getFile());
+		// settings.saveSettings(); //saved on write
+	}
 
-        SharedPreferences.Editor ed = mPrefs.edit();
-        ed.putString("default_folder", fb.getFile().getAbsolutePath());
-        ed.putBoolean("allowRoot", allowRoot);
-        ed.commit();
-    }
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		if (TAB_BROWSE.contentEquals(tabs.getCurrentTabTag())) {
+			fb.onCreateContextMenu(menu, v, menuInfo);
+		} else {
+			fl.onCreateContextMenu(menu, v, menuInfo);
+		}
+	}
 
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		if (TAB_BROWSE.contentEquals(tabs.getCurrentTabTag())) {
+			return fb.onContextItemSelected(item);
+		} else {
+			return fl.onContextItemSelected(item);
+		}
+	}
+
+	private int getVersion() {
+		PackageInfo pinfo;
+		try {
+			pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+			return pinfo.versionCode;
+		} catch (NameNotFoundException e) {
+			return -2;
+		}
+	}
+
+	private void versionCheck() {
+		final int myVer = getVersion();
+		if (myVer > settings.getVersion()) {
+			/*
+			 * Stolen from
+			 * http://stackoverflow.com/questions/4300012/displaying-
+			 * a-dialog-in-oncreate
+			 */
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.first_run_version_title);
+			builder.setMessage(R.string.first_run_message);
+			builder.setNeutralButton(R.string.ok_menu_button, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					settings.setVersion(myVer);
+					// settings.saveSettings(); //Saved on write
+				}
+			});
+			AlertDialog alert = builder.create();
+			alert.show(); // <-- Forgot this in the original post
+		}
+	}
 
 	/** Move one folder back and if the current folder is root end application */
 	public void onBackPressed() {
 		File f = fb.getFile();
 		File p = f.getParentFile();
-		if (p == null || (f.compareTo(sdCardFile) == 0 && !allowRoot)) {
+		if (p == null || (f.compareTo(settings.getSdCardFile()) == 0 && !settings.isAllowRoot())) {
 			this.finish();
 			return;
 		}
@@ -102,28 +175,71 @@ public class CameraFolders extends Activity implements OnClickListener {
 	 * Called when the setdefault button in the menu is clicked
 	 */
 	public boolean onOptionsItemSelected(MenuItem item) {
-		//SharedPreferences settings = getPreferences(0);
-		SharedPreferences.Editor editor = mPrefs.edit();
-		/*
-		 * if (item.getItemId() == R.id.setdefault) {
-			editor.putString("default_folder", fb.getFile().getAbsolutePath());
-			shortToast("Default folder: " + fb.getFile().getAbsolutePath());
-		} */
-		if (item.getItemId() == R.id.allowRoot) {
-			allowRoot = !allowRoot;
-			editor.putBoolean("allowRoot", allowRoot);
-			int icon = allowRoot ? android.R.drawable.button_onoff_indicator_on
-					: android.R.drawable.button_onoff_indicator_off;
+
+		if (item.getItemId() == R.id.changeSort) {
+			settings.toggleSortType();
+			setSort(item);
+		} else if (item.getItemId() == R.id.allowRoot) {
+			settings.toggleAllowRoot();
+			int icon = settings.isAllowRoot() ? android.R.drawable.button_onoff_indicator_on : android.R.drawable.button_onoff_indicator_off;
 			item.setIcon(icon);
+		} else if (item.getItemId() == R.id.showVideoButton) {
+			settings.toggleShowVideo();
+			int icon = settings.isShowVideo() ? android.R.drawable.button_onoff_indicator_on : android.R.drawable.button_onoff_indicator_off;
+			item.setIcon(icon);
+			ImageButton b = (ImageButton)findViewById(R.id.video);
+			b.setVisibility(settings.isShowVideo() ? View.VISIBLE : View.GONE);
+			
+		} else if (item.getItemId() == R.id.showHidden) {
+			settings.toggleShowHidden();
+			fb.showHidden(settings.isShowHidden());
+			fb.updateFileList();
+			int icon = settings.isShowHidden() ? android.R.drawable.button_onoff_indicator_on : android.R.drawable.button_onoff_indicator_off;
+			item.setIcon(icon);
+		} else if (item.getItemId() == R.id.changePattern) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.new_file_pattern_title);
+			builder.setMessage(R.string.new_file_pattern);
+			// Set an EditText view to get user input
+			final EditText input = new EditText(this);
+			input.setText(settings.getFilePattern());
+			builder.setView(input);
+
+			builder.setPositiveButton(R.string.ok_menu_button, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					settings.setFilePattern("" + input.getText());
+				}
+			});
+			builder.setNegativeButton(R.string.abort_menu_button, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					shortToast("Pattern change aborted");
+				}
+			});
+			AlertDialog alert = builder.create();
+			alert.show();
 		}
-		editor.commit();
 		return true;
 	}
 
+	public void setSort(MenuItem item) {
+		int icon = settings.isSortType() ? android.R.drawable.ic_menu_sort_alphabetically : android.R.drawable.ic_menu_sort_by_size;
+		item.setIcon(icon);
+		item.setTitle(settings.isSortType() ? "Sorting by name" : "Sorting by date");
+		fb.updateFileList();
+	}
+
 	public boolean onPrepareOptionsMenu(Menu menu) {
-		if (allowRoot) //TODO: How is this constant found in variables? (0?)
-			menu.getItem(0).setIcon(
-					android.R.drawable.button_onoff_indicator_on);
+		if (settings.isAllowRoot()) // TODO: How is this constant found in
+									// variables? (0?)
+			menu.getItem(0).setIcon(android.R.drawable.button_onoff_indicator_on);
+		if (settings.isShowHidden()) // TODO: How is this constant found in
+										// variables? (0?)
+			menu.getItem(3).setIcon(android.R.drawable.button_onoff_indicator_on);
+		if (settings.isShowVideo()) {
+			menu.getItem(4).setIcon(android.R.drawable.button_onoff_indicator_on);
+		}
+		setSort(menu.getItem(2));
+
 		return true;
 
 	}
@@ -152,13 +268,24 @@ public class CameraFolders extends Activity implements OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		tabCreate();
+		// setContentView(R.layout.tablayout);
 		setClickListener(R.id.camera);
 		// setClickListener(R.id.gallery); //Removed, didn't get it to work
 		// right.
 		setClickListener(R.id.newdir);
+		setClickListener(R.id.video);
+		fl = (FavList) this.findViewById(R.id.favView);
+		fl.setHandler(this);
+
 		fb = (FileBrowser) this.findViewById(R.id.fileView);
+		fb.setHandlers(this, fl);
+
+		registerForContextMenu(fb);
+		registerForContextMenu(fl);
 		loadSettings();
+		versionCheck();
 	}
 
 	private void promptNewDir() {
@@ -170,7 +297,7 @@ public class CameraFolders extends Activity implements OnClickListener {
 		// Set an EditText view to get user input
 		final EditText input = new EditText(this);
 
-		input.setText(folderLastName());
+		input.setText(settings.getLastNewFoldername());
 		alert.setView(input);
 		DialogInterface.OnClickListener cl = new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
@@ -188,10 +315,8 @@ public class CameraFolders extends Activity implements OnClickListener {
 	}
 
 	private void createFolder(String name) {
-		SharedPreferences settings = getPreferences(0);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putString("mkdir", name);
-		editor.commit();
+		settings.setLastNewFoldername(name);
+
 		File f = fb.getFile();
 		File n = new File(f.getAbsolutePath() + "/" + name);
 		if (!f.canWrite()) {
@@ -206,120 +331,84 @@ public class CameraFolders extends Activity implements OnClickListener {
 		fb.updateFileList();
 	}
 
-	private String folderLastName() {
-		final SharedPreferences settings = getPreferences(0);
-		String ret = settings.getString("mkdir", "New Folder");
-		return ret;
-	}
-
-	private String nextPhotoName() {
+	/**
+	 * @return String name that follows format and is unique for folder
+	 */
+	private String nextFilename(String ext) {
 		Date date = new Date();
-		String orig = ""
-				+ android.text.format.DateFormat.format("dd-MM-yy kk.mm", date);
-		String ret = orig + ".jpg";
+		String orig = "" + android.text.format.DateFormat.format(settings.getFilePattern(), date);
+		String ret = orig + ext;
 
 		int i = 1;
 		while (fb.hasFile(ret)) // So you have a folder full of
-		// Integer.MAX_VALUE pictures? Who cares! We go
-		// negative too!
 		{
-			// Log.i("CameraFolders",ret + " exists!");
-			ret = orig + "-" + i + ".jpg";
+			ret = orig + "-" + i + ext;
 			i++;
 		}
 		return ret;
 
 	}
 
-	protected void launchGallery() { // TODO
-		// if (1 == 1)
-		// throw new RuntimeException("Fix gallery!!");
+	protected void launchGallery(File f) { // TODO
 		final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-		File f = fb.getFile();
-		// Log.i("asdwqe",Uri.fromFile(list[i]) + "");
-		// Uri.fromFile(list[i])
 		intent.setDataAndType(Uri.fromFile(f), "image/*");
-		// intent.putExtra("slideshow",true);
 		startActivity(intent);
-		/*
-		 * File[] list = f.listFiles(); if (list == null || list.length < 0) {
-		 * shortToast("No files in folder"); return; }
-		 * 
-		 * //TODO for (int i = 0; i < list.length; i++) { if (list[i].isFile())
-		 * { //01-28 13:24:19.251: INFO/ActivityManager(1337): Displayed
-		 * activity com.cooliris.media/.Gallery: 628 ms (total 628 ms)
-		 * //Log.i("asdwqe",Uri.fromFile(list[i]) + ""); //Uri.fromFile(list[i])
-		 * intent.setDataAndType(Uri.fromFile(list[i]), "image/jpg");
-		 * intent.putExtra("slideshow",true); startActivity(intent); return; } }
-		 */
-		shortToast("Only folders in folder");
 		return;
+	}
+	protected void launchVideo(File f) { // TODO
+		final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+		intent.setDataAndType(Uri.fromFile(f), "video/*");
+		startActivity(intent);
+		return;
+	}
+
+	public void onResume() {
+		super.onResume();
 
 	}
 
-	protected String launchCamera() {
-		// create parameters for Intent with filename
-		ContentValues values = new ContentValues();
-		// values.put(MediaStore.Images.Media.DATA,"/sdcard/file_moo.jpg");
-		values.put(MediaStore.Images.Media.TITLE, "Image");
-		values.put(MediaStore.Images.Media.DESCRIPTION,
-				"Image capture by camera");
-		// imageUri is the current activity attribute, define and save it for
-		// later usage (also in onSaveInstanceState)
-		try {
-			imageUri = getContentResolver().insert(
-					MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-		} catch (IllegalStateException e) {
-			return "Could not open picture file, are you in read only directory?";
+	public void setFolder(File f) {
+		fb.updateFileList(f);
+	}
+
+	public void launchCamera(boolean video) {
+		if (!fb.canSavePicture()) {
+			shortToast("You cannot take pictures into read-only directories!");
+			return;
 		}
-		catch (UnsupportedOperationException e)
-		{
-			return "Your phone does not seem to be supported, please email me!";
+		
+		String nextImage;
+		if (!video) { 
+			nextImage = fb.getFile().getAbsolutePath() + "/" + nextFilename(".jpg");
+			ImageCapturer.takePicture(this, CAPTURE_IMAGE, nextImage);
 		}
-		// create new Intent
-		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-		File f = new File(fb.getFile().getAbsolutePath() + "/"
-				+ nextPhotoName());
-		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-		intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
-		// MediaStore.EX
-		startActivityForResult(intent, CAPTURE_IMAGE);
-		return null;
+		else {
+			//currently ignored
+			nextImage = fb.getFile().getAbsolutePath() + "/" + nextFilename(".m4v");
+			ImageCapturer.takeVideo(this, CAPTURE_IMAGE, nextImage);
+		}
+
+		tabs.setCurrentTabByTag(CameraFolders.TAB_BROWSE);
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == CAPTURE_IMAGE) {
-			if (resultCode == RESULT_OK) {
-				new PictureTaker().execute();
-			} else if (resultCode == RESULT_CANCELED) {
-				shortToast("Picture was not taken");
-			} else {
-				shortToast("Picture was not taken");
+			String imagefile = ImageCapturer.getResult(resultCode, data);
+			if (imagefile == null) {
+				shortToast(ImageCapturer.getError(resultCode, data));
 			}
 			fb.updateFileList();
 		}
 	}
 
-	private class PictureTaker extends AsyncTask<Void, Void, String> {
-		protected String doInBackground(Void... urls) {
-			return launchCamera();
-		}
-
-		protected void onPostExecute(String result) {
-			if (result != null)
-				shortToast(result);
-		}
-
-	}
-
 	public void onClick(View arg0) {
 		switch (arg0.getId()) {
 		case R.id.camera:
-			new PictureTaker().execute();
+			launchCamera(false);
 			break;
-		/*
-		 * case R.id.gallery: launchGallery(); break;
-		 */
+		case R.id.video:
+			launchCamera(true);
+			break;
 		case R.id.newdir:
 			promptNewDir();
 			break;
@@ -327,4 +416,63 @@ public class CameraFolders extends Activity implements OnClickListener {
 
 	}
 
+	@Override
+	public void handleFileClick(File f) {
+		if (f == null)
+			return;
+		if (!f.canRead()) {
+			shortToast("Cannot read file");
+			return;
+		}
+		String name = f.getName();
+		if (name.endsWith(".jpg")) {
+			launchGallery(f);
+			return;
+		}
+		if (name.endsWith(".m4v") || name.endsWith(".avi") || name.endsWith(".mpg")) {
+			launchVideo(f);
+			return;
+		}
+		
+		shortToast("Cannot open file");
+		return;
+		
+	}
+
+	private void setTitle(String t) {
+		TextView v = (TextView) findViewById(R.id.browsTitle);
+		v.setText(t);
+	}
+
+	@Override
+	public void handleFolderChange(File f) {
+		String title = f.getAbsolutePath();
+		Display display = getWindowManager().getDefaultDisplay();
+		int width = display.getWidth();
+
+		if (title.length() * 12 >= width) {
+			width = (title.length() * 12 - width) / 12;
+			if (width >= 0 && width <= title.length())
+				title = "..." + title.substring(width);
+		}
+		this.setTitle(title);
+	}
+
+	public void handleFileSymlink(File to) {
+		return;
+	}
+
+	@Override
+	public int compare(File arg0, File arg1) {
+		if (arg0 == null)
+			return arg1 == null ? 0 : 1;
+		if (arg1 == null)
+			return -1;
+
+		if (settings.isSortType())
+			return arg0.getName().compareToIgnoreCase(arg1.getName());
+
+		return Long.valueOf(arg1.lastModified()).compareTo(arg0.lastModified());
+
+	}
 }
