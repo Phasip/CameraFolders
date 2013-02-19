@@ -2,9 +2,10 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
 <!-- <item android:id="@+id/setdefault" android:title="Set Default" android:icon="@android:drawable/ic_menu_set_as"></item>  -->
-<item android:id="@+id/allowRoot" android:title="Allow root browsing" android:icon="@android:drawable/button_onoff_indicator_off"></item>
-<item android:id="@+id/changePattern" android:title="Change file pattern" android:icon="@android:drawable/button_onoff_indicator_off"></item>
+<item android:id="@+id/allowRoot" android:title="@string/menu_allowroot" android:icon="@android:drawable/button_onoff_indicator_off"></item>
+<item android:id="@+id/changePattern" android:title="@string/menu_changepattern" android:icon="@android:drawable/button_onoff_indicator_off"></item>
 <item android:id="@+id/changeSort" android:title="Sorting by name" android:icon="@android:drawable/ic_menu_sort_alphabetically"></item>
 <item android:id="@+id/showHidden" android:title="Show Hidden Files" android:icon="@android:drawable/button_onoff_indicator_off"></item>
 <item android:id="@+id/showVideoButton" android:title="Show Videocapture" android:icon="@android:drawable/button_onoff_indicator_off"></item>
+<item android:id="@+id/startCamera" android:title="@string/menu_favcamera" android:icon="@android:drawable/button_onoff_indicator_off"></item>
 </menu>

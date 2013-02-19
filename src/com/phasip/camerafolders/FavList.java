@@ -69,7 +69,7 @@ public class FavList extends ListView implements ViewHandler<File>, OnItemClickL
 		final File f = (File) parent.getItemAtPosition(position);
 		cam.setFolder(f);
 		Settings settings = Settings.getInstance(cam);
-		if (settings.isShowVideo()) {
+		if (settings.isShowVideo() || !settings.isStartCamera()) {
 			cam.tabs.setCurrentTabByTag(CameraFolders.TAB_BROWSE);
 		} else {
 			cam.launchCamera(false);

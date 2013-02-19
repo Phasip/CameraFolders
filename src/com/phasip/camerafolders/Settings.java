@@ -17,6 +17,7 @@ public class Settings {
 	private static final String SHOW_HIDDEN = "showHidden";
 	private static final String ALLOW_ROOT = "allowRoot";
 	private static final String SHOW_VIDEO = "showVideo";
+	private static final String START_CAMERA = "autostartCam";
 	private String filePattern = "dd-MM-yy kk.mm";
 	private File sdCardFile;
 
@@ -38,15 +39,16 @@ public class Settings {
 
 	public void setFilePattern(String filePattern) {
 		this.filePattern = filePattern;
+		saveSetting(FILE_PATTERN,filePattern);
 	}
 
 	public File getSdCardFile() {
 		return sdCardFile;
 	}
 
-	public void setSdCardFile(File sdCardFile) {
+	/*public void setSdCardFile(File sdCardFile) {
 		this.sdCardFile = sdCardFile;
-	}
+	}*/
 
 	public File getDefaultFolder() {
 		return defaultFolder;
@@ -111,6 +113,7 @@ public class Settings {
 	private Activity a;
 	private String lastFolderName;
 	private boolean showVideo;
+	private boolean startCamera;
 	private static Settings settings;
 	public static Settings getInstance(Activity a) {
 		if (settings == null)
@@ -136,6 +139,7 @@ public class Settings {
 		lastFolderName = mPrefs.getString(LAST_NEWDIR, "New Folder");
 		filePattern = mPrefs.getString(FILE_PATTERN, filePattern);
 		showVideo = mPrefs.getBoolean(SHOW_VIDEO, false);
+		startCamera = mPrefs.getBoolean(START_CAMERA, false);
 		version = mPrefs.getInt(VERSION, -1);
 	}
 
@@ -167,6 +171,19 @@ public class Settings {
 	public void setShowVideo(boolean v) {
 		showVideo = v;
 		saveSetting(SHOW_VIDEO,v);
+	}
+
+	public boolean isStartCamera() {
+		return startCamera;
+	}
+
+	public void toggleStartCamera() {
+		setStartCamera(!isStartCamera());
+	}
+
+	private void setStartCamera(boolean b) {
+		startCamera = b;
+		saveSetting(START_CAMERA,b);
 	}
 
 }

@@ -10,4 +10,7 @@
 <string name="first_run_message">If you have problems with this application please email me.\n\n
 I <b>can not</b> help you trough comments.</string>
 <string name="delete_file">Do you really want to delete this file?</string>
+<string name="menu_allowroot">Allow root browsing</string>
+<string name="menu_changepattern">Change file pattern</string>
+<string name="menu_favcamera">Don\'t autostart camera</string>
 </resources>

@@ -50,7 +50,8 @@ import android.widget.Toast;
  * @author Pasi Saarinen
  * 
  */
-public class CameraFolders extends Activity implements OnClickListener, FileHandler {
+public class CameraFolders extends Activity implements OnClickListener,
+		FileHandler {
 	// private static final String APP_NAME = "Lecture Cam";
 	private final int CAPTURE_IMAGE = 2;
 
@@ -74,8 +75,10 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 		browseTab.setContent(R.id.mainTab);
 
 		TabHost.TabSpec favTab = tabs.newTabSpec(TAB_FAV);
-		browseTab.setIndicator(getLayoutInflater().inflate(R.layout.browsetabind, null));
-		favTab.setIndicator(getLayoutInflater().inflate(R.layout.favtabind, null));
+		browseTab.setIndicator(getLayoutInflater().inflate(
+				R.layout.browsetabind, null));
+		favTab.setIndicator(getLayoutInflater().inflate(R.layout.favtabind,
+				null));
 		favTab.setContent(R.id.favTab);
 
 		tabs.addTab(browseTab);
@@ -87,7 +90,7 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 		settings = Settings.getInstance(this);
 		fb.showHidden(settings.isShowHidden());
 		fb.updateFileList(settings.getDefaultFolder());
-		ImageButton b = (ImageButton)findViewById(R.id.video);
+		ImageButton b = (ImageButton) findViewById(R.id.video);
 		b.setVisibility(settings.isShowVideo() ? View.VISIBLE : View.GONE);
 	}
 
@@ -99,7 +102,8 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 	}
 
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
 		if (TAB_BROWSE.contentEquals(tabs.getCurrentTabTag())) {
 			fb.onCreateContextMenu(menu, v, menuInfo);
 		} else {
@@ -137,12 +141,13 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
 			builder.setTitle(R.string.first_run_version_title);
 			builder.setMessage(R.string.first_run_message);
-			builder.setNeutralButton(R.string.ok_menu_button, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					settings.setVersion(myVer);
-					// settings.saveSettings(); //Saved on write
-				}
-			});
+			builder.setNeutralButton(R.string.ok_menu_button,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							settings.setVersion(myVer);
+							// settings.saveSettings(); //Saved on write
+						}
+					});
 			AlertDialog alert = builder.create();
 			alert.show(); // <-- Forgot this in the original post
 		}
@@ -152,7 +157,9 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 	public void onBackPressed() {
 		File f = fb.getFile();
 		File p = f.getParentFile();
-		if (p == null || (f.compareTo(settings.getSdCardFile()) == 0 && !settings.isAllowRoot())) {
+		if (p == null
+				|| (f.compareTo(settings.getSdCardFile()) == 0 && !settings
+						.isAllowRoot())) {
 			this.finish();
 			return;
 		}
@@ -181,20 +188,23 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 			setSort(item);
 		} else if (item.getItemId() == R.id.allowRoot) {
 			settings.toggleAllowRoot();
-			int icon = settings.isAllowRoot() ? android.R.drawable.button_onoff_indicator_on : android.R.drawable.button_onoff_indicator_off;
+			int icon = settings.isAllowRoot() ? android.R.drawable.button_onoff_indicator_on
+					: android.R.drawable.button_onoff_indicator_off;
 			item.setIcon(icon);
 		} else if (item.getItemId() == R.id.showVideoButton) {
 			settings.toggleShowVideo();
-			int icon = settings.isShowVideo() ? android.R.drawable.button_onoff_indicator_on : android.R.drawable.button_onoff_indicator_off;
+			int icon = settings.isShowVideo() ? android.R.drawable.button_onoff_indicator_on
+					: android.R.drawable.button_onoff_indicator_off;
 			item.setIcon(icon);
-			ImageButton b = (ImageButton)findViewById(R.id.video);
+			ImageButton b = (ImageButton) findViewById(R.id.video);
 			b.setVisibility(settings.isShowVideo() ? View.VISIBLE : View.GONE);
-			
+
 		} else if (item.getItemId() == R.id.showHidden) {
 			settings.toggleShowHidden();
 			fb.showHidden(settings.isShowHidden());
 			fb.updateFileList();
-			int icon = settings.isShowHidden() ? android.R.drawable.button_onoff_indicator_on : android.R.drawable.button_onoff_indicator_off;
+			int icon = settings.isShowHidden() ? android.R.drawable.button_onoff_indicator_on
+					: android.R.drawable.button_onoff_indicator_off;
 			item.setIcon(icon);
 		} else if (item.getItemId() == R.id.changePattern) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -205,38 +215,78 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 			input.setText(settings.getFilePattern());
 			builder.setView(input);
 
-			builder.setPositiveButton(R.string.ok_menu_button, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					settings.setFilePattern("" + input.getText());
-				}
-			});
-			builder.setNegativeButton(R.string.abort_menu_button, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					shortToast("Pattern change aborted");
-				}
-			});
+			builder.setPositiveButton(R.string.ok_menu_button,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							String s = input.getText() + "";
+							String bad = isGoodPattern(s);
+							if (bad == null)
+								settings.setFilePattern("" + input.getText());
+							else
+								shortToast("Pattern contains reserved character(s): "
+										+ bad);
+						}
+
+					});
+			builder.setNegativeButton(R.string.abort_menu_button,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							shortToast("Pattern change aborted");
+						}
+					});
 			AlertDialog alert = builder.create();
 			alert.show();
+		} else if (item.getItemId() == R.id.startCamera) {
+			settings.toggleStartCamera();
+			int icon = !settings.isStartCamera() ? android.R.drawable.button_onoff_indicator_on
+					: android.R.drawable.button_onoff_indicator_off;
+			item.setIcon(icon);
+			ImageButton b = (ImageButton) findViewById(R.id.video);
+			b.setVisibility(settings.isStartCamera() ? View.VISIBLE : View.GONE);
+
 		}
 		return true;
 	}
 
+	private static final String ReservedChars = "|\\?*<\":>+[]/'";
+
+	private String isGoodPattern(String s) {
+		String bad = "";
+		for (int i = 0; i < ReservedChars.length(); i++) {
+			int c = ReservedChars.charAt(i);
+			if (s.indexOf(c) != -1)
+				bad = bad + (char) c;
+		}
+		if (bad.length() == 0)
+			return null;
+		return bad;
+	}
+
 	public void setSort(MenuItem item) {
-		int icon = settings.isSortType() ? android.R.drawable.ic_menu_sort_alphabetically : android.R.drawable.ic_menu_sort_by_size;
+		int icon = settings.isSortType() ? android.R.drawable.ic_menu_sort_alphabetically
+				: android.R.drawable.ic_menu_sort_by_size;
 		item.setIcon(icon);
-		item.setTitle(settings.isSortType() ? "Sorting by name" : "Sorting by date");
+		item.setTitle(settings.isSortType() ? "Sorting by name"
+				: "Sorting by date");
 		fb.updateFileList();
 	}
 
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		if (settings.isAllowRoot()) // TODO: How is this constant found in
 									// variables? (0?)
-			menu.getItem(0).setIcon(android.R.drawable.button_onoff_indicator_on);
+			menu.getItem(0).setIcon(
+					android.R.drawable.button_onoff_indicator_on);
 		if (settings.isShowHidden()) // TODO: How is this constant found in
 										// variables? (0?)
-			menu.getItem(3).setIcon(android.R.drawable.button_onoff_indicator_on);
+			menu.getItem(3).setIcon(
+					android.R.drawable.button_onoff_indicator_on);
 		if (settings.isShowVideo()) {
-			menu.getItem(4).setIcon(android.R.drawable.button_onoff_indicator_on);
+			menu.getItem(4).setIcon(
+					android.R.drawable.button_onoff_indicator_on);
+		}
+		if (!settings.isStartCamera()) {
+			menu.getItem(5).setIcon(
+					android.R.drawable.button_onoff_indicator_on);
 		}
 		setSort(menu.getItem(2));
 
@@ -315,6 +365,12 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 	}
 
 	private void createFolder(String name) {
+		String bad = isGoodPattern(name);
+		if (bad != null) {
+			shortToast("Filename contains reserved character(s): " + bad);
+			return;
+		}
+
 		settings.setLastNewFoldername(name);
 
 		File f = fb.getFile();
@@ -336,7 +392,9 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 	 */
 	private String nextFilename(String ext) {
 		Date date = new Date();
-		String orig = "" + android.text.format.DateFormat.format(settings.getFilePattern(), date);
+		String orig = ""
+				+ android.text.format.DateFormat.format(
+						settings.getFilePattern(), date);
 		String ret = orig + ext;
 
 		int i = 1;
@@ -355,6 +413,7 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 		startActivity(intent);
 		return;
 	}
+
 	protected void launchVideo(File f) { // TODO
 		final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
 		intent.setDataAndType(Uri.fromFile(f), "video/*");
@@ -376,15 +435,16 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 			shortToast("You cannot take pictures into read-only directories!");
 			return;
 		}
-		
+
 		String nextImage;
-		if (!video) { 
-			nextImage = fb.getFile().getAbsolutePath() + "/" + nextFilename(".jpg");
+		if (!video) {
+			nextImage = fb.getFile().getAbsolutePath() + "/"
+					+ nextFilename(".jpg");
 			ImageCapturer.takePicture(this, CAPTURE_IMAGE, nextImage);
-		}
-		else {
-			//currently ignored
-			nextImage = fb.getFile().getAbsolutePath() + "/" + nextFilename(".m4v");
+		} else {
+			// currently ignored
+			nextImage = fb.getFile().getAbsolutePath() + "/"
+					+ nextFilename(".m4v");
 			ImageCapturer.takeVideo(this, CAPTURE_IMAGE, nextImage);
 		}
 
@@ -429,14 +489,15 @@ public class CameraFolders extends Activity implements OnClickListener, FileHand
 			launchGallery(f);
 			return;
 		}
-		if (name.endsWith(".m4v") || name.endsWith(".avi") || name.endsWith(".mpg")) {
+		if (name.endsWith(".m4v") || name.endsWith(".avi")
+				|| name.endsWith(".mpg")) {
 			launchVideo(f);
 			return;
 		}
-		
+
 		shortToast("Cannot open file");
 		return;
-		
+
 	}
 
 	private void setTitle(String t) {
