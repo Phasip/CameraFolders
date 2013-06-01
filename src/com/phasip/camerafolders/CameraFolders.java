@@ -28,6 +28,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Display;
@@ -38,6 +39,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TabHost;
@@ -248,7 +250,7 @@ public class CameraFolders extends Activity implements OnClickListener,
 		return true;
 	}
 
-	private static final String ReservedChars = "|\\?*<\":>+[]/'";
+	private static final String ReservedChars = "|\\?*\"/";
 
 	private String isGoodPattern(String s) {
 		String bad = "";
@@ -392,9 +394,20 @@ public class CameraFolders extends Activity implements OnClickListener,
 	 */
 	private String nextFilename(String ext) {
 		Date date = new Date();
+		String s = settings.getFilePattern();
+		/*
+		 * Ugly hack to make dateformat take %XX instead of just XX
+		 * letting people easily have normal text in their filename
+		 -- Actually skipping this hack
+		/*
+        s = s.replaceAll("'", "'''");
+		s = "'" + s + "'";
+		s = s.replaceAll("%(([a-zA-Z])\\2+)", "'$1'");
+        */
+		
 		String orig = ""
 				+ android.text.format.DateFormat.format(
-						settings.getFilePattern(), date);
+						s, date);
 		String ret = orig + ext;
 
 		int i = 1;
@@ -406,7 +419,7 @@ public class CameraFolders extends Activity implements OnClickListener,
 		return ret;
 
 	}
-
+/*
 	protected void launchGallery(File f) { // TODO
 		final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
 		intent.setDataAndType(Uri.fromFile(f), "image/*");
@@ -419,7 +432,7 @@ public class CameraFolders extends Activity implements OnClickListener,
 		intent.setDataAndType(Uri.fromFile(f), "video/*");
 		startActivity(intent);
 		return;
-	}
+	} */
 
 	public void onResume() {
 		super.onResume();
@@ -484,7 +497,18 @@ public class CameraFolders extends Activity implements OnClickListener,
 			shortToast("Cannot read file");
 			return;
 		}
-		String name = f.getName();
+        //launch intent
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        Uri uri = Uri.fromFile(f); 
+        String url = uri.toString();
+        //grab mime
+        String newMimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+                MimeTypeMap.getFileExtensionFromUrl(url));
+
+        i.setDataAndType(uri, newMimeType);
+        startActivity(i);
+        return;
+        /*
 		if (name.endsWith(".jpg")) {
 			launchGallery(f);
 			return;
@@ -494,9 +518,10 @@ public class CameraFolders extends Activity implements OnClickListener,
 			launchVideo(f);
 			return;
 		}
-
+	
 		shortToast("Cannot open file");
 		return;
+		*/
 
 	}
 

@@ -137,19 +137,19 @@ public class ImageCapturer extends Activity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		
+
 		super.onCreate(savedInstanceState);
 		imagelocation = this.getIntent().getStringExtra(EXTRA_IMAGE_PATH);
 		Log.d(APP_NAME, "Starting with imagelocation: " + imagelocation);
-		Log.d(APP_NAME,"onCreate!");
+		Log.d(APP_NAME, "onCreate!");
 		if (imagelocation != null) {
 			launchCamera();
-			Log.d(APP_NAME,"camera: " + imagelocation);
+			Log.d(APP_NAME, "camera: " + imagelocation);
 			return;
 		}
 		imagelocation = this.getIntent().getStringExtra(EXTRA_VIDEO_PATH);
 		if (imagelocation != null) {
-			Log.d(APP_NAME,"video: " + imagelocation);
+			Log.d(APP_NAME, "video: " + imagelocation);
 			launchVideo();
 			return;
 		}
@@ -163,25 +163,28 @@ public class ImageCapturer extends Activity {
 	 * @return
 	 */
 	private String launchVideo() {
-		//Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-		
-	   Intent intent = new Intent("android.media.action.VIDEO_CAPTURE");
-		    
-		    
+		// Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+
+		Intent intent = new Intent("android.media.action.VIDEO_CAPTURE");
+
 		lastImageId = getLastVideoId();
 		if (imagelocation == null) {
-			imagelocation = "/mnt/sdcard/DCIM/" + System.currentTimeMillis() + ".m4v";
+			imagelocation = "/mnt/sdcard/DCIM/" + System.currentTimeMillis()
+					+ ".m4v";
 		}
-		//File f = new File(imagelocation);
-		//intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-		//intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
-		
+		// File f = new File(imagelocation);
+		// intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+		// intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+
 		Log.d(APP_NAME, "Lastimageid is: " + lastImageId);
-	    try {
-	        startActivityForResult(intent, CAPTURE_VIDEO);
-	    } catch (ActivityNotFoundException ex) {
-	        Toast.makeText(this, "Your device does not contain an application to run this action", Toast.LENGTH_LONG).show();
-	    }
+		try {
+			startActivityForResult(intent, CAPTURE_VIDEO);
+		} catch (ActivityNotFoundException ex) {
+			Toast.makeText(
+					this,
+					"Your device does not contain an application to run this action",
+					Toast.LENGTH_LONG).show();
+		}
 
 		return null;
 	}
@@ -193,10 +196,11 @@ public class ImageCapturer extends Activity {
 	 */
 	private String launchCamera() {
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-		
+
 		lastImageId = getLastImageId();
 		if (imagelocation == null) {
-			imagelocation = "/mnt/sdcard/DCIM/" + System.currentTimeMillis() + ".jpg";
+			imagelocation = "/mnt/sdcard/DCIM/" + System.currentTimeMillis()
+					+ ".jpg";
 		}
 		File f = new File(imagelocation);
 		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
@@ -223,10 +227,13 @@ public class ImageCapturer extends Activity {
 		final String imageOrderBy = MediaStore.MediaColumns._ID + " DESC";
 		final String imageWhere = null;
 		final String[] imageArguments = null;
-		Cursor imageCursor = this.getContentResolver().query(externalContentUri, imageColumns, imageWhere, imageArguments, imageOrderBy);
+		Cursor imageCursor = this.getContentResolver().query(
+				externalContentUri, imageColumns, imageWhere, imageArguments,
+				imageOrderBy);
 		int id = Integer.MAX_VALUE;
 		if (imageCursor.moveToFirst()) {
-			id = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.MediaColumns._ID));
+			id = imageCursor.getInt(imageCursor
+					.getColumnIndex(MediaStore.MediaColumns._ID));
 		}
 		imageCursor.close();
 		Log.d(APP_NAME, "getLastId found id: " + id);
@@ -258,13 +265,22 @@ public class ImageCapturer extends Activity {
 			return;
 
 		} else if (resultCode == RESULT_CANCELED) {
+			Log.d(APP_NAME, "onActivityResult, canceled");
 			if (imagelocation != null) {
+
 				File f = new File(imagelocation);
+				Log.d(APP_NAME, "onActivityResult, canceled, removing file: "
+						+ imagelocation);
 				f.delete();
 			}
 		} else {
+			Log.d(APP_NAME, "onActivityResult, Unknown resultcode: "
+					+ resultCode);
 			if (imagelocation != null) {
 				File f = new File(imagelocation);
+				Log.d(APP_NAME,
+						"onActivityResult, Unknown resultcode, removing file: "
+								+ imagelocation);
 				f.delete();
 			}
 		}
@@ -274,7 +290,6 @@ public class ImageCapturer extends Activity {
 		finish();
 
 	}
-
 
 	/**
 	 * Handles the different bad cameras in android with many special cases,
@@ -288,18 +303,21 @@ public class ImageCapturer extends Activity {
 	 *            extra
 	 * @return
 	 */
-	private String files_cleanup(Uri extContUri, int lastCaptureId, String myPicPath) {
+	private String files_cleanup(Uri extContUri, int lastCaptureId,
+			String myPicPath) {
 		/*
 		 * Checking for duplicate images This is necessary because some camera
 		 * implementation not only save where you want them to save but also in
 		 * their default location.
 		 */
 
-		final String[] imageColumns = { MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns._ID, };
+		final String[] imageColumns = { MediaStore.MediaColumns.DATA,
+				MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns._ID, };
 		final String imageOrderBy = MediaStore.MediaColumns._ID + " DESC";
 		final String imageWhere = MediaStore.MediaColumns._ID + ">?";
 		final String[] imageArguments = { Integer.toString(lastCaptureId) };
-		Cursor imageCursor = this.getContentResolver().query(extContUri, imageColumns, imageWhere, imageArguments, imageOrderBy);
+		Cursor imageCursor = this.getContentResolver().query(extContUri,
+				imageColumns, imageWhere, imageArguments, imageOrderBy);
 
 		File goodPath = null;
 		if (myPicPath != null) {
@@ -317,7 +335,8 @@ public class ImageCapturer extends Activity {
 		}
 		String path = null;
 		do {
-			path = imageCursor.getString(imageCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+			path = imageCursor.getString(imageCursor
+					.getColumnIndex(MediaStore.Images.Media.DATA));
 		} while (path.contentEquals(myPicPath) && imageCursor.moveToNext());
 
 		if (imageCursor.isAfterLast()) {
@@ -331,8 +350,10 @@ public class ImageCapturer extends Activity {
 			}
 		}
 
-		int id = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
-		Long size = imageCursor.getLong(imageCursor.getColumnIndex(MediaStore.Images.Media.SIZE));
+		int id = imageCursor.getInt(imageCursor
+				.getColumnIndex(MediaStore.Images.Media._ID));
+		Long size = imageCursor.getLong(imageCursor
+				.getColumnIndex(MediaStore.Images.Media.SIZE));
 		imageCursor.close();
 
 		Log.d(APP_NAME, "From:" + path + " to " + myPicPath);
@@ -349,7 +370,8 @@ public class ImageCapturer extends Activity {
 		if ((cameraSaved.exists()) && (goodPath.length() < size)) {
 			Log.d(APP_NAME, "CameraSaved is bigger!");
 			if (goodPath.exists() && !goodPath.delete()) {
-				Log.d(APP_NAME, "We fail to delete the smaller, saving smaller deleting bigger");
+				Log.d(APP_NAME,
+						"We fail to delete the smaller, saving smaller deleting bigger");
 				cameraSaved.delete();
 				error = "We fail to delete the smaller, saving smaller deleting bigger";
 				return goodPath.getAbsolutePath();
@@ -357,7 +379,8 @@ public class ImageCapturer extends Activity {
 
 			if (!moveFile(cameraSaved, goodPath)) {
 				if (goodPath.exists()) {
-					Log.d(APP_NAME, "We fail to move the bigger, saving smaller deleting bigger");
+					Log.d(APP_NAME,
+							"We fail to move the bigger, saving smaller deleting bigger");
 					cameraSaved.delete();
 					error = "We fail to move the bigger, saving smaller deleting bigger";
 					return goodPath.getAbsolutePath();
@@ -372,7 +395,8 @@ public class ImageCapturer extends Activity {
 		ContentResolver cr = getContentResolver();
 		ContentValues s = new ContentValues();
 		s.put(MediaStore.MediaColumns.DATA, goodPath.getAbsolutePath());
-		cr.update(extContUri, s, MediaStore.Images.Media._ID + "=?", new String[] { Long.toString(id) });
+		cr.update(extContUri, s, MediaStore.Images.Media._ID + "=?",
+				new String[] { Long.toString(id) });
 		// cr.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
 		// MediaStore.Images.Media._ID + "=?", new String[] { Long.toString(id)
 		// });
