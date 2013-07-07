@@ -56,6 +56,7 @@ public class CameraFolders extends Activity implements OnClickListener,
 		FileHandler {
 	// private static final String APP_NAME = "Lecture Cam";
 	private final int CAPTURE_IMAGE = 2;
+	private final int CAPTURE_VIDEO = 3;
 
 	private FileBrowser fb;
 	private Settings settings;
@@ -458,17 +459,20 @@ public class CameraFolders extends Activity implements OnClickListener,
 			// currently ignored
 			nextImage = fb.getFile().getAbsolutePath() + "/"
 					+ nextFilename(".m4v");
-			ImageCapturer.takeVideo(this, CAPTURE_IMAGE, nextImage);
+			ImageCapturer.takeVideo(this, CAPTURE_VIDEO, nextImage);
 		}
 
 		tabs.setCurrentTabByTag(CameraFolders.TAB_BROWSE);
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == CAPTURE_IMAGE) {
+		if (requestCode == CAPTURE_IMAGE || requestCode == CAPTURE_VIDEO) {
 			String imagefile = ImageCapturer.getResult(resultCode, data);
 			if (imagefile == null) {
 				shortToast(ImageCapturer.getError(resultCode, data));
+			} else if (settings.isStartCamera()) {
+				launchCamera(requestCode == CAPTURE_VIDEO);
+				return;
 			}
 			fb.updateFileList();
 		}
@@ -508,20 +512,6 @@ public class CameraFolders extends Activity implements OnClickListener,
         i.setDataAndType(uri, newMimeType);
         startActivity(i);
         return;
-        /*
-		if (name.endsWith(".jpg")) {
-			launchGallery(f);
-			return;
-		}
-		if (name.endsWith(".m4v") || name.endsWith(".avi")
-				|| name.endsWith(".mpg")) {
-			launchVideo(f);
-			return;
-		}
-	
-		shortToast("Cannot open file");
-		return;
-		*/
 
 	}
 
