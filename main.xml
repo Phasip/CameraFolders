@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <com.phasip.camerafolders.FileBrowser
+        android:id="@+id/fileView"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_weight="1.0" >
+    </com.phasip.camerafolders.FileBrowser>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <ImageButton
+            android:id="@+id/camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/fileView"
+            android:src="@android:drawable/ic_menu_camera" >
+        </ImageButton>
+
+        <ImageButton
+            android:id="@+id/newdir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/fileView"
+            android:layout_toRightOf="@id/camera"
+            android:src="@android:drawable/ic_menu_add" >
+        </ImageButton>
+        <!-- <ImageButton android:id="@+id/gallery"  android:layout_toRightOf="@id/newdir" android:layout_below="@id/fileView" android:layout_width="wrap_content" android:src="@android:drawable/ic_menu_gallery" android:layout_height="wrap_content"></ImageButton> -->
+
+    </LinearLayout>
+
+</LinearLayout>
